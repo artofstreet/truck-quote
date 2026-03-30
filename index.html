@@ -50,10 +50,6 @@ body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f0
 
 .divider{border:none;border-top:1px solid rgba(255,255,255,.15);margin:12px 0;}
 
-.exp-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
-.exp-row .en{flex:1.2;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;color:#111;}
-.exp-row .ev{flex:1;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;color:#111;text-align:right;}
-.exp-row .en:focus,.exp-row .ev:focus{outline:none;border-color:#3b82f6;}
 .m1b{background:#bfdbfe;color:#1e40af;}
 .m2b{background:#bbf7d0;color:#14532d;}
 </style>
@@ -111,13 +107,6 @@ body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f0
     </div>
   </div>
 
-  <!-- 부대비용 -->
-  <div class="card">
-    <div class="card-title">부대비용</div>
-    <div class="row"><label>탁 송 료</label><div><input type="number" id="e1" placeholder="0"><span class="unit">원</span></div></div>
-    <div class="row"><label>임 판 보 험</label><div><input type="number" id="e2" placeholder="0"><span class="unit">원</span></div></div>
-  </div>
-
   <!-- 결과 -->
   <div class="result-card">
     <div style="font-size:11px;letter-spacing:2px;opacity:.5;margin-bottom:14px;">할부금융 이용 조건 <span class="badge" id="o_badge"></span></div>
@@ -151,19 +140,10 @@ body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f0
 
     <div id="o_pmts" style="margin-bottom:10px;"></div>
 
-    <hr class="divider">
-
-    <div style="font-size:11px;opacity:.5;margin-bottom:8px;">부대비용</div>
-    <div id="o_exps"></div>
-    <div class="res-row" style="margin-top:4px;">
-      <div class="res-label">부대비용 합계</div>
-      <div class="res-val" id="o_expTotal">-</div>
-    </div>
-
     <div class="cash-box">
       <div class="cash-label">당 사 현 금 입 금 액</div>
       <div class="cash-amount" id="o_cash">-</div>
-      <div class="cash-note">계약금 + 인도금 + 부대비용</div>
+      <div class="cash-note">계약금 + 인도금</div>
     </div>
   </div>
 
@@ -209,7 +189,7 @@ function calc() {
       document.getElementById('idoAmt').value = vatFloor;
     }
     ido = n('idoAmt');
-    vatRemainder = vat - ido; // 만원 미만 잔액 → 할부원금 합산
+    vatRemainder = vat - ido;
   }
 
   const ido2 = n('idoAmt2');
@@ -217,13 +197,6 @@ function calc() {
 
   const principal = M === 1 ? sale - totalIdo - down : sale - ido2 - down;
   const presum = down + totalIdo;
-
-  const exps = [
-    { name: '탁송료', val: n('e1') },
-    { name: '임판보험', val: n('e2') },
-  ].filter(e => e.val > 0);
-  const expTotal = exps.reduce((s,e) => s + e.val, 0);
-  const cashIn = presum + expTotal;
 
   const months = Array.from(document.querySelectorAll('.mochk:checked')).map(c=>+c.value).sort((a,b)=>a-b);
 
@@ -252,12 +225,7 @@ function calc() {
     pb.innerHTML += `<div class="pmt-row"><span class="pmt-mo">${m} 개월</span><span class="pmt-amt">월 ${mp.toLocaleString('ko-KR')} 원</span></div>`;
   });
 
-  // 부대비용
-  const eb = document.getElementById('o_exps');
-  eb.innerHTML = exps.map(e => `<div class="res-row" style="padding:5px 0;"><span class="res-label" style="font-size:12px;">${e.name||'항목'}</span><span style="font-size:13px;">${e.val.toLocaleString('ko-KR')} 원</span></div>`).join('');
-
-  T('o_expTotal', fmt(expTotal));
-  T('o_cash', cashIn.toLocaleString('ko-KR') + ' 원');
+  T('o_cash', presum.toLocaleString('ko-KR') + ' 원');
 }
 
 // 인도금 수동수정
