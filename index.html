@@ -3,12 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>트럭 할부 계산기</title>
+<title>한장화의 트럭판매 대출계산기</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f0f4f9;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:20px;}
 
 .wrap{width:100%;max-width:440px;}
+
+/* 헤더 타이틀 */
+.page-header{
+  text-align:center;
+  padding:18px 0 10px;
+  margin-bottom:14px;
+}
+.page-header .brand{
+  font-size:13px;
+  letter-spacing:3px;
+  color:#6b7280;
+  font-weight:600;
+  text-transform:uppercase;
+  margin-bottom:4px;
+}
+.page-header .title{
+  font-size:20px;
+  font-weight:800;
+  color:#12274f;
+  letter-spacing:-0.5px;
+}
+.page-header .title span{
+  color:#3b82f6;
+}
+.page-header .divline{
+  width:40px;
+  height:3px;
+  background:#3b82f6;
+  border-radius:2px;
+  margin:8px auto 0;
+}
 
 /* 입력 카드 */
 .card{background:#fff;border-radius:14px;padding:22px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
@@ -56,6 +87,13 @@ body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f0
 </head>
 <body>
 <div class="wrap">
+
+  <!-- 페이지 타이틀 -->
+  <div class="page-header">
+    <div class="brand">Truck Finance Calculator</div>
+    <div class="title">한장화의 <span>트럭판매</span> 대출계산기</div>
+    <div class="divline"></div>
+  </div>
 
   <!-- 방법 선택 -->
   <div class="card">
@@ -200,7 +238,6 @@ function calc() {
 
   const months = Array.from(document.querySelectorAll('.mochk:checked')).map(c=>+c.value).sort((a,b)=>a-b);
 
-  // badge
   const badge = document.getElementById('o_badge');
   badge.textContent = M===1 ? '방법1 (부가세 제외)' : '방법2 (부가세 포함)';
   badge.className = 'badge ' + (M===1?'m1b':'m2b');
@@ -217,7 +254,6 @@ function calc() {
   if (prEl) prEl.innerHTML = fmt(principal) + (vatRemainder > 0 ? `<br><span style="font-size:11px;opacity:.55;">잔액 ${vatRemainder.toLocaleString('ko-KR')}원 포함</span>` : '');
   T('o_rate', rate > 0 ? rate + ' %' : '- %');
 
-  // 월 할부금
   const pb = document.getElementById('o_pmts');
   pb.innerHTML = months.length ? '' : '<div style="opacity:.4;font-size:12px;text-align:center;">개월 선택 없음</div>';
   months.forEach(m => {
@@ -228,10 +264,8 @@ function calc() {
   T('o_cash', presum.toLocaleString('ko-KR') + ' 원');
 }
 
-// 인도금 수동수정
 document.getElementById('idoAmt').addEventListener('input', () => { idoManual = true; calc(); });
 
-// 전체 이벤트
 document.querySelectorAll('input').forEach(el => {
   if (el.id !== 'idoAmt') el.addEventListener('input', calc);
   el.addEventListener('change', calc);
