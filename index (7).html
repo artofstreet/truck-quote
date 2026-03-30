@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>트럭 할부 계산기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f0f4f9;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:20px;}
+
+.wrap{width:100%;max-width:440px;}
+
+/* 입력 카드 */
+.card{background:#fff;border-radius:14px;padding:22px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.card-title{font-size:11px;letter-spacing:2px;color:#6b7280;font-weight:600;margin-bottom:14px;text-transform:uppercase;}
+.row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.row:last-child{margin-bottom:0;}
+.row label{font-size:14px;color:#374151;white-space:nowrap;}
+.row input{width:170px;text-align:right;padding:8px 12px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:14px;font-family:inherit;color:#111;transition:.2s;}
+.row input:focus{outline:none;border-color:#3b82f6;}
+.row .unit{font-size:12px;color:#9ca3af;margin-left:4px;min-width:18px;}
+.hint{font-size:11px;color:#9ca3af;margin-top:2px;text-align:right;}
+
+/* 방법 선택 */
+.method-row{display:flex;gap:8px;margin-bottom:14px;}
+.mbtn{flex:1;padding:10px 6px;border-radius:10px;border:2px solid #e5e7eb;background:#fff;color:#6b7280;font-size:13px;cursor:pointer;font-family:inherit;transition:.2s;line-height:1.4;}
+.mbtn.on{border-color:#3b82f6;background:#eff6ff;color:#1d4ed8;font-weight:700;}
+
+/* 개월 선택 */
+.mo-wrap{display:flex;gap:6px;flex-wrap:wrap;}
+.mochk{display:none;}
+.molabel{padding:7px 14px;border-radius:8px;border:1.5px solid #e5e7eb;font-size:13px;color:#6b7280;cursor:pointer;transition:.2s;}
+.mochk:checked + .molabel{border-color:#059669;background:#ecfdf5;color:#065f46;font-weight:700;}
+
+/* 결과 */
+.result-card{background:#12274f;border-radius:14px;padding:22px;color:#fff;box-shadow:0 4px 16px rgba(18,39,79,.3);}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.res-row:last-child{border-bottom:none;}
+.res-label{font-size:13px;opacity:.75;}
+.res-val{font-size:15px;font-weight:600;}
+.res-sub{font-size:11px;opacity:.5;margin-top:1px;}
+.pmt-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,255,255,.07);border-radius:8px;margin-bottom:6px;}
+.pmt-mo{font-size:12px;opacity:.7;}
+.pmt-amt{font-size:16px;font-weight:700;color:#6ee7b7;}
+
+.cash-box{text-align:center;padding:16px;background:rgba(255,255,255,.1);border-radius:10px;margin-top:10px;}
+.cash-label{font-size:11px;opacity:.6;letter-spacing:2px;margin-bottom:4px;}
+.cash-amount{font-size:26px;font-weight:700;color:#fbbf24;}
+.cash-note{font-size:11px;opacity:.5;margin-top:4px;}
+
+.divider{border:none;border-top:1px solid rgba(255,255,255,.15);margin:12px 0;}
+
+.exp-row{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+.exp-row .en{flex:1.2;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;color:#111;}
+.exp-row .ev{flex:1;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;color:#111;text-align:right;}
+.exp-row .en:focus,.exp-row .ev:focus{outline:none;border-color:#3b82f6;}
+.m1b{background:#bfdbfe;color:#1e40af;}
+.m2b{background:#bbf7d0;color:#14532d;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 방법 선택 -->
+  <div class="card">
+    <div class="card-title">할부 방법</div>
+    <div class="method-row">
+      <button class="mbtn on" id="m1btn" onclick="setM(1)">방법 1<br><small style="font-weight:400;font-size:11px;">부가세 제외 할부</small></button>
+      <button class="mbtn" id="m2btn" onclick="setM(2)">방법 2<br><small style="font-weight:400;font-size:11px;">부가세 포함 전체 할부</small></button>
+    </div>
+
+    <!-- 판매가격 -->
+    <div class="card-title">가격 입력</div>
+    <div class="row">
+      <label>판매가격 (부가세 포함)</label>
+      <div style="text-align:right;">
+        <input type="number" id="salePrice" placeholder="0"><span class="unit">원</span>
+      </div>
+    </div>
+    <div class="hint">차량가격 + 특장가격 합산 입력</div>
+  </div>
+
+  <!-- 할부 조건 -->
+  <div class="card">
+    <div class="card-title">할부 조건</div>
+    <div class="row">
+      <label>계약금</label>
+      <div><input type="number" id="downPay" value="1000000"><span class="unit">원</span></div>
+    </div>
+    <div class="row" id="idoRow">
+      <label>인도금 ① <span style="font-size:11px;color:#9ca3af;">부가세 환급</span></label>
+      <div><input type="number" id="idoAmt" placeholder="자동계산"><span class="unit">원</span></div>
+    </div>
+    <div class="row" id="idoRow2">
+      <label>인도금 ② <span style="font-size:11px;color:#9ca3af;">고객 직접입금</span></label>
+      <div><input type="number" id="idoAmt2" placeholder="0" value="0"><span class="unit">원</span></div>
+    </div>
+    <div class="row">
+      <label>연이자율</label>
+      <div><input type="number" id="iRate" step="0.01" placeholder="예) 7.5"><span class="unit">%</span></div>
+    </div>
+    <div class="row" style="align-items:flex-start;margin-top:4px;">
+      <label style="padding-top:8px;">할부개월</label>
+      <div class="mo-wrap">
+        <input type="checkbox" class="mochk" id="m24" value="24" checked><label class="molabel" for="m24">24</label>
+        <input type="checkbox" class="mochk" id="m36" value="36" checked><label class="molabel" for="m36">36</label>
+        <input type="checkbox" class="mochk" id="m48" value="48" checked><label class="molabel" for="m48">48</label>
+        <input type="checkbox" class="mochk" id="m60" value="60" checked><label class="molabel" for="m60">60</label>
+        <input type="checkbox" class="mochk" id="m72" value="72" checked><label class="molabel" for="m72">72</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- 부대비용 -->
+  <div class="card">
+    <div class="card-title">부대비용</div>
+    <div class="row"><label>탁 송 료</label><div><input type="number" id="e1" placeholder="0"><span class="unit">원</span></div></div>
+    <div class="row"><label>임 판 보 험</label><div><input type="number" id="e2" placeholder="0"><span class="unit">원</span></div></div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="result-card">
+    <div style="font-size:11px;letter-spacing:2px;opacity:.5;margin-bottom:14px;">할부금융 이용 조건 <span class="badge" id="o_badge"></span></div>
+
+    <div class="res-row">
+      <div><div class="res-label">계약금</div></div>
+      <div class="res-val" id="o_down">-</div>
+    </div>
+    <div class="res-row" id="o_idoRow">
+      <div><div class="res-label">인도금 ① 부가세 환급</div><div class="res-sub">만원 단위 내림</div></div>
+      <div class="res-val" id="o_ido">-</div>
+    </div>
+    <div class="res-row" id="o_ido2Row" style="display:none;">
+      <div><div class="res-label">인도금 ② 고객 직접입금</div></div>
+      <div class="res-val" id="o_ido2">-</div>
+    </div>
+    <div class="res-row" id="o_presumRow">
+      <div><div class="res-label">합계 (계약금+인도금)</div></div>
+      <div class="res-val" id="o_presum">-</div>
+    </div>
+    <div class="res-row" style="background:rgba(255,255,255,.07);padding:10px 12px;border-radius:8px;margin:4px 0;">
+      <div><div class="res-label" style="font-weight:700;opacity:1;">할부원금</div></div>
+      <div class="res-val" style="font-size:18px;" id="o_principal">-</div>
+    </div>
+    <div class="res-row">
+      <div><div class="res-label">적용이율</div></div>
+      <div class="res-val" id="o_rate">-</div>
+    </div>
+
+    <hr class="divider">
+
+    <div id="o_pmts" style="margin-bottom:10px;"></div>
+
+    <hr class="divider">
+
+    <div style="font-size:11px;opacity:.5;margin-bottom:8px;">부대비용</div>
+    <div id="o_exps"></div>
+    <div class="res-row" style="margin-top:4px;">
+      <div class="res-label">부대비용 합계</div>
+      <div class="res-val" id="o_expTotal">-</div>
+    </div>
+
+    <div class="cash-box">
+      <div class="cash-label">당 사 현 금 입 금 액</div>
+      <div class="cash-amount" id="o_cash">-</div>
+      <div class="cash-note">계약금 + 인도금 + 부대비용</div>
+    </div>
+  </div>
+
+</div>
+<script>
+let M = 1;
+let idoManual = false;
+
+function setM(m) {
+  M = m;
+  document.getElementById('m1btn').className = 'mbtn' + (m===1?' on':'');
+  document.getElementById('m2btn').className = 'mbtn' + (m===2?' on':'');
+  document.getElementById('idoRow').style.display = m===1 ? 'flex' : 'none';
+  document.getElementById('idoRow2').style.display = 'flex';
+  document.getElementById('o_idoRow').style.display = m===1 ? 'flex' : 'none';
+  document.getElementById('o_ido2Row').style.display = 'none';
+  document.getElementById('o_presumRow').style.display = m===1 ? 'flex' : 'none';
+  idoManual = false;
+  calc();
+}
+
+function n(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function fmt(v) { return Math.round(v).toLocaleString('ko-KR') + ' 원'; }
+function T(id, v) { const el = document.getElementById(id); if(el) el.textContent = v; }
+
+function pmt(P, ann, mo) {
+  const r = ann / 100 / 12;
+  if (!r || mo === 0) return Math.round(P / mo);
+  return Math.round(P * r * Math.pow(1+r,mo) / (Math.pow(1+r,mo)-1));
+}
+
+function calc() {
+  const sale = n('salePrice');
+  const vat = Math.round(sale / 1.1 * 0.1);
+  const down = n('downPay');
+  const rate = n('iRate');
+
+  let ido = 0;
+  let vatRemainder = 0;
+  if (M === 1) {
+    if (!idoManual) {
+      const vatFloor = Math.floor(vat / 10000) * 10000;
+      document.getElementById('idoAmt').value = vatFloor;
+    }
+    ido = n('idoAmt');
+    vatRemainder = vat - ido; // 만원 미만 잔액 → 할부원금 합산
+  }
+
+  const ido2 = n('idoAmt2');
+  const totalIdo = ido + ido2;
+
+  const principal = M === 1 ? sale - totalIdo - down : sale - ido2 - down;
+  const presum = down + totalIdo;
+
+  const exps = [
+    { name: '탁송료', val: n('e1') },
+    { name: '임판보험', val: n('e2') },
+  ].filter(e => e.val > 0);
+  const expTotal = exps.reduce((s,e) => s + e.val, 0);
+  const cashIn = presum + expTotal;
+
+  const months = Array.from(document.querySelectorAll('.mochk:checked')).map(c=>+c.value).sort((a,b)=>a-b);
+
+  // badge
+  const badge = document.getElementById('o_badge');
+  badge.textContent = M===1 ? '방법1 (부가세 제외)' : '방법2 (부가세 포함)';
+  badge.className = 'badge ' + (M===1?'m1b':'m2b');
+
+  T('o_down', fmt(down));
+  const idoEl = document.getElementById('o_ido');
+  if (idoEl) idoEl.innerHTML = fmt(ido) + (vatRemainder > 0 ? `<br><span style="font-size:11px;opacity:.5;">부가세 ${vat.toLocaleString('ko-KR')}원 → 만원단위</span>` : '');
+  const ido2El = document.getElementById('o_ido2');
+  if (ido2El) ido2El.textContent = fmt(ido2);
+  const ido2Row = document.getElementById('o_ido2Row');
+  if (ido2Row) ido2Row.style.display = ido2 > 0 ? 'flex' : 'none';
+  T('o_presum', fmt(presum));
+  const prEl = document.getElementById('o_principal');
+  if (prEl) prEl.innerHTML = fmt(principal) + (vatRemainder > 0 ? `<br><span style="font-size:11px;opacity:.55;">잔액 ${vatRemainder.toLocaleString('ko-KR')}원 포함</span>` : '');
+  T('o_rate', rate > 0 ? rate + ' %' : '- %');
+
+  // 월 할부금
+  const pb = document.getElementById('o_pmts');
+  pb.innerHTML = months.length ? '' : '<div style="opacity:.4;font-size:12px;text-align:center;">개월 선택 없음</div>';
+  months.forEach(m => {
+    const mp = pmt(principal, rate, m);
+    pb.innerHTML += `<div class="pmt-row"><span class="pmt-mo">${m} 개월</span><span class="pmt-amt">월 ${mp.toLocaleString('ko-KR')} 원</span></div>`;
+  });
+
+  // 부대비용
+  const eb = document.getElementById('o_exps');
+  eb.innerHTML = exps.map(e => `<div class="res-row" style="padding:5px 0;"><span class="res-label" style="font-size:12px;">${e.name||'항목'}</span><span style="font-size:13px;">${e.val.toLocaleString('ko-KR')} 원</span></div>`).join('');
+
+  T('o_expTotal', fmt(expTotal));
+  T('o_cash', cashIn.toLocaleString('ko-KR') + ' 원');
+}
+
+// 인도금 수동수정
+document.getElementById('idoAmt').addEventListener('input', () => { idoManual = true; calc(); });
+
+// 전체 이벤트
+document.querySelectorAll('input').forEach(el => {
+  if (el.id !== 'idoAmt') el.addEventListener('input', calc);
+  el.addEventListener('change', calc);
+});
+document.querySelectorAll('.mochk').forEach(el => el.addEventListener('change', calc));
+
+calc();
+</script>
+</body>
+</html>
